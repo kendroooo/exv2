@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+python-multipart
+tortoise-orm[asyncpg]
+asyncpg
+aerich
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+httpx
+proxmoxer
+pyunifi
+pydantic
+pydantic-settings
+email-validator
+python-dateutil
+redis
