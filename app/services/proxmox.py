@@ -142,5 +142,89 @@ class ProxmoxService(ABC):
                 return False
 
         return False
+    
+    async def start_vm(self, vmid: int) -> Dict[str, Any]:
+        """Start a VM"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).status.start.post
+        )
+
+    async def stop_vm(self, vmid: int) -> Dict[str, Any]:
+        """Stop a VM gracefully"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).status.shutdown.post
+        )
+
+    async def force_stop_vm(self, vmid: int) -> Dict[str, Any]:
+        """Force stop a VM"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).status.stop.post
+        )
+
+    async def restart_vm(self, vmid: int) -> Dict[str, Any]:
+        """Restart a VM"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).status.reboot.post
+        )
+    
+    async def delete_vm(self, vmid: int) -> Dict[str, Any]:
+        """Delete a VM"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).delete
+        )
+
+    async def suspend_vm(self, vmid: int) -> Dict[str, Any]:
+        """Suspend a VM"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).status.suspend.post
+        )
+
+    async def get_vm_status(self, vmid: int) -> Dict[str, Any]:
+        """Get VM Status"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).status.current.get
+        )
+
+    async def get_vm_config(self, vmid: int) -> Dict[str, Any]:
+        """Get VM Config"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).config.get
+        )
+
+    async def update_vm_config(self, vmid: int, **config) -> Dict[str, Any]:
+        """Update VM Config"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu(vmid).config.put,
+            **config
+        )
+
+    async def get_vm_ip(self, vmid: int) -> Optional[str]:
+        """
+        Get VM IP address from QEMU agent
+
+        Returns:
+            IP address if present
+        """
+        try:
+            result: Optional[Dict[str, Any]] = await self._run_sync(
+                self.proxmox.nodes(self.node).qemu(vmid).agent('network-get-interfaces').get
+            )
+
+            for interface in result.get('result', []):
+                if interface.get('name') not in ['lo', 'localhost']:
+                    for ip_addr in interface.get('ip-addresses', []):
+                        if ip_addr.get('ip-address-type') == 'ipv4':
+                            return ip_addr.get('ip-address')
+
+            return None
+
+        except Exception:
+            return None
+
+    async def list_vms(self) -> List[Dict[str, Any]]:
+        """List all VMs on the node"""
+        return await self._run_sync(
+            self.proxmox.nodes(self.node).qemu.get
+        )
 
 
